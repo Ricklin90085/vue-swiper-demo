@@ -3,6 +3,7 @@
     <input type="file" class="mb-2" @change="onUploadImage">
     <draggable v-model="images" class="mb-5">
       <transition-group class="flex items-center space-x-4">
+        <!-- 為了防止 key 重複，需要改變 key 名稱 -->
         <div v-for="image in images" :key="`${image.id}-preview`" class="relative">
           <button class="absolute top-0 right-0 px-2 py-1 bg-gray-300" @click="deleteImage(image)">X</button>
           <img :src="image.file" alt="" class="w-20 cursor-move">
@@ -17,6 +18,7 @@
       </div>
       <div class="swiper-button-next"></div>
       <div class="swiper-button-prev"></div>
+      <div class="swiper-pagination"></div>
     </div>
   </div>
 </template>
@@ -24,10 +26,10 @@
 <script>
 import { mapMutations } from 'vuex'
 import draggable from 'vuedraggable'
-  import Swiper, { Navigation } from 'swiper';
-  import 'swiper/swiper-bundle.min.css';
+import Swiper, { Navigation, Pagination } from 'swiper';
+import 'swiper/swiper-bundle.min.css';
 
-  Swiper.use([Navigation]);
+  Swiper.use([Navigation, Pagination]);
 
 export default {
   name: 'App',
@@ -43,6 +45,8 @@ export default {
     images() {
       if (this.swiper) {
         this.swiper.destroy()
+        // 因為我們有更新過 images 的內容，所以我們要等畫面渲染完成後
+        // 使用渲染後的 HTML 初始化 Swiper
         this.$nextTick(() => {
           this.initSwiper()
         })
@@ -60,9 +64,7 @@ export default {
     }
   },
   mounted() {
-    this.$nextTick(() => {
-      this.initSwiper()
-    })
+    this.initSwiper()
   },
   methods: {
     ...mapMutations({
@@ -75,25 +77,46 @@ export default {
         navigation: {
           nextEl: ".swiper-button-next",
           prevEl: ".swiper-button-prev"
+        },
+        pagination: {
+          el: ".swiper-pagination",
+          clickable: true
         }
       })
     },
     onUploadImage(e) {
       const file = e.target.files[0]
+      console.log(file)
       this.addImage({
         id: new Date().getTime(),
         file: URL.createObjectURL(file)
       })
-      // this.images.push({
-      //   id: new Date().getTime(),
-      //   file: URL.createObjectURL(file)
-      // })
     },
-    // deleteImage(target) {
-    //   this.images = this.images.filter((image) => {
-    //     return image.id !== target.id
+    // ajaxDeleteImage(imgId) {
+    //   ajax.delete('/api/homework/img', imgId)
+    //     .then((res) => {
+    //       // this.setImages(res)
+    //       // this.deleteImage(imgId)
+    //     })
+    //     .catch((res) => {
+    //       // console.error(res)
+    //     })
+    // },
+    // https://pjchender.blogspot.com/2019/01/js-javascript-input-file-upload-file.html
+    // onUploadImage(e) {
+    //   const file = e.target.files[0]
+    //   const form = new FormData()
+    //   img 是跟後端溝通的欄位名稱
+    //   form.append('img', file)
+    //   ajax.post('/api/homework/img', form)
+    //   .then((response) => {
+    //     response 裡可能會有 img.id 跟 img.url 
+    //     this.addImage({
+    //       id: img.id,
+    //       file: img.url
+    //     })
     //   })
-    // }
+    // },
   }
 }
 </script>
